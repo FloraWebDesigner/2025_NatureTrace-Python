@@ -1,11 +1,11 @@
-import streamlit as st
-import requests
+# utils/llama_utils.py
 import os
+import requests
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 HEADERS = {
-    "Authorization": f"Bearer {st.secrets.get('groq_api_key', '')}",
+    "Authorization": f"Bearer {os.getenv('GROQ_API_KEY') or os.environ.get('GROQ_API_KEY') or ''}",
     "Content-Type": "application/json"
 }
 
@@ -28,37 +28,9 @@ def generate_animal_facts(animal_name):
     }
 
     try:
-        response = requests.post(
-            GROQ_API_URL,
-            headers=HEADERS,
-            json=body
-        )
-        result = response.json()
-        return result["choices"][0]["message"]["content"]
+        response = requests.post(GROQ_API_URL, headers=HEADERS, json=body)
+        response.raise_for_status()
+        data = response.json()
+        return data['choices'][0]['message']['content'].strip()
     except Exception as e:
         return f"Couldn't fetch fun fact: {str(e)}"
-
-def generate_description(animal):
-    prompt = (
-        f"Write a detailed description of a {animal}, including appearance, behavior, and habitat."
-    )
-
-    body = {
-        "model": LLAMA_MODEL,
-        "messages": [
-            {"role": "system", "content": "You describe animals in detail for educational purposes."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.7
-    }
-
-    try:
-        response = requests.post(
-            GROQ_API_URL,
-            headers=HEADERS,
-            json=body
-        )
-        result = response.json()
-        return result["choices"][0]["message"]["content"]
-    except Exception as e:
-        return f"Couldn't fetch description: {str(e)}"
